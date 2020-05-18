@@ -20,7 +20,7 @@ ap.add_argument("--output", type=str,
 	default='output/vid.avi',
 	help="path to optional output video file")
 ap.add_argument("--probability", type=float, 
-	default=0.2,
+	default=0.5,
 	help="minimum probability to filter weak detections")
 ap.add_argument("--threshold", type=float,
 	default=0.4,
@@ -60,10 +60,11 @@ def drawbox(frame, objects_detected, flag=False):
 		# no violation detected
 		if not flag:
 			cv2.rectangle(frame, (int(startX), int(startY)), (int(endX), int(endY)), (0, 0, 0), thickness=2)
+
 		# violation detected
 		else:
 			cv2.rectangle(frame, (int(startX), int(startY)), (int(endX), int(endY)), (0, 255, 0), thickness=2)
-			
+
 		cv2.putText(frame, label, (int(startX), int(startY)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255))
 
 
@@ -85,16 +86,8 @@ def obj_detection(frame, model, probability):
 	for detection in preds[0, 0]:
 		score = float(detection[2])
 		if score > probability and int(detection[1]) == 1:
-
 			box = detection[3:7] * np.array([W, H, W, H])
-			(startX, startY, endX, endY) = box
-
-			#remove these two lines and use before drawbox
-			#rects.append(box)
-			#centroids.append((int((startX + endX) / 2.0), int((startY + endY) / 2.0)))
-
 			label = 'person_' + str(id_num)
-
 			while True:
 				if label not in objects_detected.keys():
 					break
@@ -102,7 +95,6 @@ def obj_detection(frame, model, probability):
 				label = 'person_' + str(id_num)
 
 			objects_detected[label] = [tuple(box), score]
-
 	objects_list = list(objects_detected.keys())
 
 	if len(objects_list) > 0:
@@ -144,47 +136,25 @@ while True:
 			trackers_dict.pop(item)
 			objects_detected.pop(item)
 
-		if len(objects_detected) > 0:
-			drawbox(frame, objects_detected)
-		else:
-			objects_detected, trackers_dict =  obj_detection(frame, net, args['probability'])
+	if len(objects_detected) > 0:
+		# draw boxes around detected objects
+		drawbox(frame, objects_detected)
 
+		for obj in objects_detected.keys():
+			bbox = objects_detected[obj][0]
+			(startX, startY, endX, endY) = bbox
+			rects.append(bbox)
+			centroids.append((int((startX + endX) / 2.0), int((startY + endY) / 2.0)))
 
-	'''
-
-	# instead use object tracking
-	else:
-		print('kcf')
-		if len(objects_detected) > 0:
-
-			del_items = []
-			for obj, tracker in trackers_dict.items():
-				found, box = tracker.update(frame)
-				if found:
-					(startX, startY, endX, endY) = box
-					# draw a black rectangle around detected objects
-					drawbox(frame, box, flag=True)
-
-					rects.append(box)
-					centroids.append((int((startX + endX) / 2.0), int((startY + endY) / 2.0)))
-				
-				else:
-					del_items.append(obj)
-
-		for item in del_items:
-			trackers_dict.pop(item)
-			objects_detected.pop(item)
-
-
-			
-	if len(rects) != 0:
 		rects = np.array(rects)
 		centroids = np.array(centroids)
-	
-		# distances between the centroids
+
+		# distance between the centroids
 		distance = dist.cdist(centroids, centroids)
 		distance = np.array(distance)
 
+
+		# cause distance matrix is symmetrical
 		for i in range(distance.shape[0]):
 			for j in range(distance.shape[1]):
 				if i >= j:
@@ -193,8 +163,7 @@ while True:
 		# in order to perform this matching we must (1) find the
 		# smallest value in each row and then (2) sort the row
 		# indexes based on their minimum values so that the row
-		# with the smallest value as at the *front* of the index
-		# list
+		# with the smallest value as at the *front* of the index list
 		rows = distance.min(axis=1).argsort()
 
 		# next, we perform a similar process on the columns by
@@ -205,17 +174,22 @@ while True:
 		# minimum distance between two people for social distancing 
 		threshold = args['threshold'] * (H + W) / 10
 
+		
 		# green boxes around objects closer than threshold
 		for (row, col) in zip(rows, cols):
 			if distance[row, col] < threshold:
-				# print("Violation detected")
-				# adding green boxes
-				cv2.rectangle(frame, (int(rects[row, 0]), int(rects[row, 1])), \
-					(int(rects[row, 2]), int(rects[row, 3])), (0, 255, 0), thickness=2)
-				cv2.rectangle(frame, (int(rects[col, 0]), int(rects[col, 1])), \
-					(int(rects[col, 2]), int(rects[col, 3])), (0, 255, 0), thickness=2)
+				print("Violation detected")
+				
+				close_objects = dict()
+				close_objects['person_'+str(row)] = objects_detected['person_'+str(row)]
+				close_objects['person_'+str(col)] = objects_detected['person_'+str(col)]
 
-	'''
+				# adding green boxes
+				drawbox(frame, close_objects, flag=True)	
+
+	else:
+		objects_detected, trackers_dict =  obj_detection(frame, net, args['probability'])
+
 	
 
 	# if we are supposed to be writing a video to disk, initialize
@@ -231,6 +205,11 @@ while True:
 	# show the output frame
 	cv2.imshow("Frame", frame)
 	key = cv2.waitKey(1) & 0xFF
+
+	# manually ask for new detections
+	if key == ord('n'):
+		objects_detected, trackers_dict =  obj_detection(frame, net, args['probability'])
+
 
 	# if the `q` key was pressed, break from the loop
 	if key == ord("q"):
