@@ -8,4 +8,8 @@ Since CCTVs have the high ground ( ͡° ͜ʖ ͡°) simply comparing the distance
 * Fix low FPS issue after using KCF tracker. Hopefully it's just me making a dumb mistake.
 * Clean the code.
 * Train a better model for this use-case.  
-... will add more when I think of them
+... will add more when I think of them  
+
+# File links:
+    yolov3.cfg - https://github.com/pjreddie/darknet/blob/master/cfg/yolov3.cfg  
+    yolov3.weights - https://pjreddie.com/media/files/yolov3.weights  
