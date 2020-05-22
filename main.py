@@ -8,7 +8,7 @@ import time
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("--model", type=str, 
-	default='YOLO',
+	default='SSD',
 	help="SSD or YOLO?")
 ap.add_argument("--input", type=str,
 	default='videos/clip.mp4',
