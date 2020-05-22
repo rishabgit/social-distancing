@@ -98,7 +98,9 @@ def obj_detection(frame, model, probability):
 	objects_list = list(objects_detected.keys())
 
 	if len(objects_list) > 0:
-		trackers_dict = {key : cv2.TrackerKCF_create() for key in (objects_list)}
+		trackers_dict = {key : cv2.TrackerKCF_create() for key in (objects_list)} 
+		# much faster but inaccurate alternative-
+		# trackers_dict = {key : cv2.TrackerMOSSE_create() for key in (objects_list)}
 		for obj in trackers_dict.keys():
 			trackers_dict[obj].init(frame, objects_detected[obj][0])
 	
