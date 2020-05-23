@@ -12,4 +12,5 @@ Since CCTVs have the high ground ( ͡° ͜ʖ ͡°) simply comparing the distance
 
 # File links:
     yolov3.cfg - https://github.com/pjreddie/darknet/blob/master/cfg/yolov3.cfg  
-    yolov3.weights - https://pjreddie.com/media/files/yolov3.weights  
+    yolov3.weights - https://pjreddie.com/media/files/yolov3.weights 
+    Tensorflow MobileNet-SSD v1 - http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_2017_11_17.tar.gz and https://github.com/opencv/opencv_extra/blob/master/testdata/dnn/ssd_mobilenet_v1_coco_2017_11_17.pbtxt
